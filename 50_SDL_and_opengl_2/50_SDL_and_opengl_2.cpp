@@ -12,6 +12,9 @@ and may not be redistributed without written permission.*/
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
+GLfloat rotationX = 0.0f;
+GLfloat rotationY = 0.0f;
+
 //Starts up SDL, creates window, and initializes OpenGL
 bool init();
 
@@ -38,6 +41,59 @@ SDL_GLContext gContext;
 
 //Render flag
 bool gRenderQuad = true;
+
+void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat edgeLength )
+{
+    GLfloat halfSideLength = edgeLength * 0.5f;
+    
+    GLfloat vertices[] =
+    {
+        // front face
+        centerPosX - halfSideLength, centerPosY + halfSideLength, centerPosZ + halfSideLength, // top left
+        centerPosX + halfSideLength, centerPosY + halfSideLength, centerPosZ + halfSideLength, // top right
+        centerPosX + halfSideLength, centerPosY - halfSideLength, centerPosZ + halfSideLength, // bottom right
+        centerPosX - halfSideLength, centerPosY - halfSideLength, centerPosZ + halfSideLength, // bottom left
+        
+        // back face
+        centerPosX - halfSideLength, centerPosY + halfSideLength, centerPosZ - halfSideLength, // top left
+        centerPosX + halfSideLength, centerPosY + halfSideLength, centerPosZ - halfSideLength, // top right
+        centerPosX + halfSideLength, centerPosY - halfSideLength, centerPosZ - halfSideLength, // bottom right
+        centerPosX - halfSideLength, centerPosY - halfSideLength, centerPosZ - halfSideLength, // bottom left
+        
+        // left face
+        centerPosX - halfSideLength, centerPosY + halfSideLength, centerPosZ + halfSideLength, // top left
+        centerPosX - halfSideLength, centerPosY + halfSideLength, centerPosZ - halfSideLength, // top right
+        centerPosX - halfSideLength, centerPosY - halfSideLength, centerPosZ - halfSideLength, // bottom right
+        centerPosX - halfSideLength, centerPosY - halfSideLength, centerPosZ + halfSideLength, // bottom left
+        
+        // right face
+        centerPosX + halfSideLength, centerPosY + halfSideLength, centerPosZ + halfSideLength, // top left
+        centerPosX + halfSideLength, centerPosY + halfSideLength, centerPosZ - halfSideLength, // top right
+        centerPosX + halfSideLength, centerPosY - halfSideLength, centerPosZ - halfSideLength, // bottom right
+        centerPosX + halfSideLength, centerPosY - halfSideLength, centerPosZ + halfSideLength, // bottom left
+        
+        // top face
+        centerPosX - halfSideLength, centerPosY + halfSideLength, centerPosZ + halfSideLength, // top left
+        centerPosX - halfSideLength, centerPosY + halfSideLength, centerPosZ - halfSideLength, // top right
+        centerPosX + halfSideLength, centerPosY + halfSideLength, centerPosZ - halfSideLength, // bottom right
+        centerPosX + halfSideLength, centerPosY + halfSideLength, centerPosZ + halfSideLength, // bottom left
+        
+        // top face
+        centerPosX - halfSideLength, centerPosY - halfSideLength, centerPosZ + halfSideLength, // top left
+        centerPosX - halfSideLength, centerPosY - halfSideLength, centerPosZ - halfSideLength, // top right
+        centerPosX + halfSideLength, centerPosY - halfSideLength, centerPosZ - halfSideLength, // bottom right
+        centerPosX + halfSideLength, centerPosY - halfSideLength, centerPosZ + halfSideLength  // bottom left
+    };
+    
+    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    //glColor3f( colour[0], colour[1], colour[2] );
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glVertexPointer( 3, GL_FLOAT, 0, vertices );
+
+    glDrawArrays( GL_QUADS, 0, 24 );
+    
+    glDisableClientState( GL_VERTEX_ARRAY );
+}
 
 bool init()
 {
@@ -98,9 +154,12 @@ bool initGL()
 	bool success = true;
 	GLenum error = GL_NO_ERROR;
 
+	glViewport( 0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT ); // specifies the part of the window to which OpenGL will draw (in pixels), convert from normalised to pixels
+
 	//Initialize Projection Matrix
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
+	glOrtho( 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, 0, 1000 ); // essentially set coordinate system
 	
 	//Check for error
 	error = glGetError();
@@ -143,6 +202,23 @@ void handleKeys( unsigned char key, int x, int y )
 	{
 		gRenderQuad = !gRenderQuad;
 	}
+
+	if( key == 'w' )
+    {
+        rotationY -= 10.f;
+    }
+    else if( key == 's' )
+    {
+        rotationY += 10.f;
+    }
+    else if( key == 'a' )
+    {
+        rotationX -= 10.f;
+    }
+    else if( key == 'd' )
+    {
+        rotationX += 10.f;
+    }
 }
 
 void update()
@@ -158,50 +234,60 @@ void render()
 	//Render quad
 	if( gRenderQuad )
 	{
+		glPushMatrix( );
+        glTranslatef( SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, -500 );
+        glRotatef( rotationX, 1, 0, 0 );
+        glRotatef( rotationY, 0, 1, 0 );
+        glTranslatef( -(SCREEN_WIDTH / 2), -(SCREEN_HEIGHT / 2), 500 );
+        
+        DrawCube( SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, -500, 200 );
+        
+        glPopMatrix();
+
 		// White side - BACK
-		glBegin(GL_POLYGON);
-		glColor3f(   1.0,  0.0, 1.0 );
-		glVertex3f(  0.5, -0.5, 0.5 );
-		glVertex3f(  0.5,  0.5, 0.5 );
-		glVertex3f( -0.5,  0.5, 0.5 );
-		glVertex3f( -0.5, -0.5, 0.5 );
-		glEnd();
+		// glBegin(GL_POLYGON);
+		// glColor3f(   1.0,  0.0, 1.0 );
+		// glVertex3f(  0.5, -0.5, 0.5 );
+		// glVertex3f(  0.5,  0.5, 0.5 );
+		// glVertex3f( -0.5,  0.5, 0.5 );
+		// glVertex3f( -0.5, -0.5, 0.5 );
+		// glEnd();
 
-		// Purple side - RIGHT
-		glBegin(GL_POLYGON);
-		glColor3f(  1.0,  0.0,  1.0 );
-		glVertex3f( 0.5, -0.5, -0.5 );
-		glVertex3f( 0.5,  0.5, -0.5 );
-		glVertex3f( 0.5,  0.5,  0.5 );
-		glVertex3f( 0.5, -0.5,  0.5 );
-		glEnd();
+		// // Purple side - RIGHT
+		// glBegin(GL_POLYGON);
+		// glColor3f(  1.0,  0.0,  1.0 );
+		// glVertex3f( 0.5, -0.5, -0.5 );
+		// glVertex3f( 0.5,  0.5, -0.5 );
+		// glVertex3f( 0.5,  0.5,  0.5 );
+		// glVertex3f( 0.5, -0.5,  0.5 );
+		// glEnd();
 
-		// Green side - LEFT
-		glBegin(GL_POLYGON);
-		glColor3f(   0.0,  1.0,  0.0 );
-		glVertex3f( -0.5, -0.5,  0.5 );
-		glVertex3f( -0.5,  0.5,  0.5 );
-		glVertex3f( -0.5,  0.5, -0.5 );
-		glVertex3f( -0.5, -0.5, -0.5 );
-		glEnd();
+		// // Green side - LEFT
+		// glBegin(GL_POLYGON);
+		// glColor3f(   0.0,  1.0,  0.0 );
+		// glVertex3f( -0.5, -0.5,  0.5 );
+		// glVertex3f( -0.5,  0.5,  0.5 );
+		// glVertex3f( -0.5,  0.5, -0.5 );
+		// glVertex3f( -0.5, -0.5, -0.5 );
+		// glEnd();
 
-		// Blue side - TOP
-		glBegin(GL_POLYGON);
-		glColor3f(   0.0,  0.0,  1.0 );
-		glVertex3f(  0.5,  0.5,  0.5 );
-		glVertex3f(  0.5,  0.5, -0.5 );
-		glVertex3f( -0.5,  0.5, -0.5 );
-		glVertex3f( -0.5,  0.5,  0.5 );
-		glEnd();
+		// // Blue side - TOP
+		// glBegin(GL_POLYGON);
+		// glColor3f(   0.0,  0.0,  1.0 );
+		// glVertex3f(  0.5,  0.5,  0.5 );
+		// glVertex3f(  0.5,  0.5, -0.5 );
+		// glVertex3f( -0.5,  0.5, -0.5 );
+		// glVertex3f( -0.5,  0.5,  0.5 );
+		// glEnd();
 
-		// Red side - BOTTOM
-		glBegin(GL_POLYGON);
-		glColor3f(   1.0,  0.0,  0.0 );
-		glVertex3f(  0.5, -0.5, -0.5 );
-		glVertex3f(  0.5, -0.5,  0.5 );
-		glVertex3f( -0.5, -0.5,  0.5 );
-		glVertex3f( -0.5, -0.5, -0.5 );
-		glEnd();
+		// // Red side - BOTTOM
+		// glBegin(GL_POLYGON);
+		// glColor3f(   1.0,  0.0,  0.0 );
+		// glVertex3f(  0.5, -0.5, -0.5 );
+		// glVertex3f(  0.5, -0.5,  0.5 );
+		// glVertex3f( -0.5, -0.5,  0.5 );
+		// glVertex3f( -0.5, -0.5, -0.5 );
+		// glEnd();
 	}
 }
 
@@ -269,3 +355,4 @@ int main( int argc, char* args[] )
 
 	return 0;
 }
+
