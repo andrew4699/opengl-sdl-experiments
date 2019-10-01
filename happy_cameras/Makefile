@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = main.cpp
+OBJS = main.cpp glad.cpp
 
 #CC specifies which compiler we're using
 CC = g++
@@ -9,7 +9,7 @@ CC = g++
 COMPILER_FLAGS = -w
 
 #LINKER_FLAGS specifies the libraries we're linking against
-LINKER_FLAGS = -lSDL2 -lGL -lGLU
+LINKER_FLAGS = -lSDL2 -lGLU -lGL -ldl
 
 #OBJ_NAME specifies the name of our exectuable
 OBJ_NAME = game
